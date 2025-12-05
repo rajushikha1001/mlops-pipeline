@@ -1,0 +1,23 @@
+version: "3.8"
+services:
+  mlflow:
+    image: python:3.11-slim
+    container_name: mlflow_local
+    working_dir: /app
+    volumes:
+      - ../mlruns:/app/mlruns
+      - ../data:/app/data
+      - ../src:/app/src
+    command: bash -c "pip install mlflow && mlflow server --backend-store-uri file:/app/mlruns --default-artifact-root file:/app/mlruns --host 0.0.0.0 --port 5000"
+    ports:
+      - "5000:5000"
+
+  api:
+    build: ..
+    container_name: ml-serving
+    depends_on:
+      - mlflow
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    ports:
+      - "8000:8000"
